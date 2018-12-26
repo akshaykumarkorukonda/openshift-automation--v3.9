@@ -1,0 +1,74 @@
+- name: Evaluate groups and prepare post-config payload
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - name: Load variables
+    include_vars:
+      dir: vars/
+
+  - name: Evaluate first_master
+    add_host:
+      name: "{{ master_hosts[0] }}"
+      groups: first_master
+  
+  - name: generate reg2 secrets manifest from template
+    template:
+      src: 'templates/{{ item.src }}'
+      dest: 'files/{{ item.dest }}'
+    with_items:
+      - { src: 'jenkins-ci-reg2_secret.j2', dest: 'jenkins-ci-reg2_secret.yaml' }
+      - { src: 'jenkins-ci-acds_secret.j2', dest: 'jenkins-ci-acds_secret.yaml' }
+      - { src: 'jenkins-ci-bitbucket_secret.j2', dest: 'jenkins-ci-bitbucket_secret.yaml' }
+
+  - name: Create tar ball from files/
+    archive:
+      path: files/
+      dest: post-config.tgz
+
+  - name: Cleanup secrets manifest
+    file:
+      path: 'files/{{ item.path }}'
+      state: absent
+    with_items:
+      - { path: 'jenkins-ci-reg2_secret.yaml' }
+      - { path: 'jenkins-ci-acds_secret.yaml' }
+      - { path: 'jenkins-ci-bitbucket_secret.yaml' }
+  
+- name: Deploy post-config manifests
+  hosts: first_master
+  gather_facts: no
+  tasks:
+  - name: Load variables
+    include_vars:
+      dir: vars/
+
+  - name: Create dir for post-config
+    file:
+      path: "{{ payload_path }}"
+      state: directory
+
+  - name: Copy and unpack tar ball on master server
+    unarchive:
+      src: post-config.tgz
+      dest: "{{ payload_path }}"
+
+  - name: Run deploy.sh script
+    script: ./deploy.sh {{ payload_path }}
+    register: deploy_output
+  - debug: var=deploy_output.stdout_lines
+
+  - name: Cleanup remote post-config payload
+    file:
+      path: "{{ payload_path }}"
+      state: absent
+
+- name: Cleanup local post-config payload
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - name: Clean up tar ball
+    file:
+      path: post-config.tgz
+      state: absent

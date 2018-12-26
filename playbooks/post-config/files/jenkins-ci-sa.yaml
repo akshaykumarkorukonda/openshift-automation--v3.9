@@ -1,0 +1,7 @@
+apiVersion: v1
+imagePullSecrets:
+#- name: jenkins-agent-dockercfg-djkrl
+kind: ServiceAccount
+metadata:
+  name: jenkins-agent
+  namespace: jenkins-ci

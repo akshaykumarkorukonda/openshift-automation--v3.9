@@ -1,0 +1,13 @@
+---
+
+master_hosts: "{{ groups.masters | default([]) }}"
+manifest_path: "/tmp/gap-manifests"
+
+baseImage_prometheusOperator: "quay.io/coreos/prometheus-operator"
+baseImage_prometheusK8s: "openshift/prometheus"
+baseImage_alertmanagerMain: "openshift/prometheus-alertmanager"
+baseImage_nodeExporter: "openshift/prometheus-node-exporter"
+baseImage_kubeRbacProxy: "quay.io/coreos/kube-rbac-proxy"
+baseImage_kubeStateMetrics: "quay.io/coreos/kube-state-metrics"
+baseImage_grafana: "grafana/grafana"
+baseImage_auth: "openshift/oauth-proxy"

@@ -1,0 +1,46 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cluster-monitoring-operator
+  namespace: openshift-monitoring
+  labels:
+    app: cluster-monitoring-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cluster-monitoring-operator
+  template:
+    metadata:
+      labels:
+        app: cluster-monitoring-operator
+    spec:
+      serviceAccountName: cluster-monitoring-operator
+      containers:
+      - image: quay.io/coreos/cluster-monitoring-operator:v0.1.0
+        name: cluster-monitoring-operator
+        args:
+        - "-namespace=openshift-monitoring"
+        - "-configmap=cluster-monitoring-config"
+        - "-logtostderr=true"
+        - "-v=4"
+        #- "-tags=prometheus-operator=master"
+        #- "-tags=prometheus-config-reloader=master"
+        #- "-tags=config-reloader=master"
+        #- "-tags=prometheus=master"
+        #- "-tags=alertmanager=master"
+        #- "-tags=grafana=master"
+        #- "-tags=oauth-proxy=master"
+        #- "-tags=node-exporter=master"
+        #- "-tags=kube-state-metrics=master"
+        #- "-tags=kube-rbac-proxy=master"
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          limits:
+            cpu: 20m
+            memory: 50Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi

@@ -1,0 +1,45 @@
+---
+
+- name: Export secrets for necessary for Terraform
+  hosts: localhost
+  connection: local
+  gather_facts: yes
+  tasks:
+
+    - name: Load variables
+      include_vars:
+        dir: vars/
+      no_log: true
+
+    - name: Add vars to .bashrc for future sessions
+      lineinfile:
+        path: /home/vagrant/.bashrc
+        line: "export TF_VAR_{{ item.key }}='{{ item.value }}'"
+      with_dict: '{{ env_vars }}'
+      no_log: true
+
+    - name: Remove trap from .bashrc
+      lineinfile:
+        path: /home/vagrant/.bashrc
+        regexp: '^trap'
+        state: absent
+
+    - name: Check terraform version
+      shell: "terraform --version 2>&1 | grep {{ terraform_version }}"
+      failed_when: false
+      changed_when: false
+      register: terraform_versions_match
+
+    - name: Check chefdk version
+      shell: "chef --version 2>&1 | grep {{ chefdk_version }}"
+      failed_when: false
+      changed_when: false
+      register: chefdk_versions_match
+
+- import_playbook: chef.yml
+  name: Install Chef
+  when: chefdk_versions_match.rc != 0
+
+- import_playbook: terraform.yml
+  name: Install Terraform
+  when: terraform_versions_match.rc != 0

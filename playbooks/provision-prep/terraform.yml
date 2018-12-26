@@ -1,0 +1,19 @@
+---
+
+- name: Install and configure ChefDK
+  hosts: localhost
+  connection: local
+  become: yes
+  gather_facts: no
+  tasks:
+
+  - name: Download terraform Linux 64
+    get_url:
+      url: https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip
+      dest: /tmp/terraform-{{terraform_version}}.zip
+
+  - name: Unarchive Terraform archive
+    unarchive:
+      src: /tmp/terraform-{{terraform_version}}.zip
+      dest: "{{terraform_dir}}"
+      copy: no

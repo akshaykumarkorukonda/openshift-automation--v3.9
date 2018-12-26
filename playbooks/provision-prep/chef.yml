@@ -1,0 +1,37 @@
+---
+
+- name: Install and configure ChefDK
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  
+  - name: install chefdk yum packages
+    yum:
+      name: "{{ chefdk_package_url }}"
+      state: "{{ chefdk_package_state }}"
+    become: yes
+    when: ansible_os_family == 'RedHat'
+
+  - name: create .chef dir
+    file:
+      path: '/home/vagrant/.chef'
+      owner: vagrant
+      group: vagrant
+      state: directory
+
+  - name: deploy chef keys
+    copy:
+      dest="{{ item.key }}"
+      content="{{ item.value.content }}"
+      owner="{{ item.value.owner }}"
+      group="{{ item.value.group }}"
+      mode="{{ item.value.mode }}"
+    with_dict: '{{ chef_private_key }}'
+    no_log: true
+  
+  - name: configure knife
+    template:
+      src: 'templates/knife.j2'
+      dest: '/home/vagrant/.chef/knife.rb'
+    with_dict: '{{ chef }}'

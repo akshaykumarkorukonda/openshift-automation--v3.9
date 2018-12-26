@@ -1,0 +1,12 @@
+apiVersion: authorization.openshift.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: jenkins-ci-admin
+roleRef:
+  name: cluster-admin
+subjects:
+- kind: ServiceAccount
+  name: jenkins-agent
+  namespace: jenkins-ci
+userNames:
+- system:serviceaccount:jenkins-ci:jenkins-agent

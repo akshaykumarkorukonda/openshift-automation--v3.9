@@ -1,0 +1,70 @@
+
+- name: Evaluate groups and prepare post-config payload
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - name: Load variables
+    include_vars:
+      dir: vars/
+
+  - name: Evaluate first_master
+    add_host:
+      name: '{{ master_hosts[0] }}'
+      groups: first_master
+
+- name: Deploy post-config manifests
+  hosts: first_master
+  become: yes
+  gather_facts: no
+  tasks:
+  - name: Load variables
+    include_vars:
+      dir: vars/
+
+  - name: get master nodes IP
+    shell: oc get nodes -l node_type=master -o jsonpath='{.items[*].status.addresses[0].address}'
+    register: master_ips
+
+  - name: endure manifest path exists
+    file:
+      path: '{{ manifest_path }}'
+      recurse: yes
+      state: directory
+  
+  - name: generate config map
+    template:
+      src: 'templates/cluster-monitoring-config.j2'
+      dest: '{{ manifest_path }}/cluster-monitoring-config.yaml'
+
+  - name: collect etcd certs
+    shell: cat /etc/origin/master/master.etcd-{{ item.cert }} | base64 --wrap=0
+    with_items:
+      - { cert: 'ca.crt' }
+      - { cert: 'client.crt' }
+      - { cert: 'client.key' }
+    register: certs
+
+  - name: generate secret
+    template:
+      src: 'templates/kube-etcd-client-certs.j2'
+      dest: '{{ manifest_path }}/kube-etcd-client-certs.yaml'
+
+  - name: move remaining manifests to server
+    copy:
+      src: '{{ item }}'
+      dest: '{{ manifest_path }}/'
+    with_fileglob:
+      - 'files/*'
+  
+  - name: deploy manifests into cluster
+    script: deploy-gap.sh {{ manifest_path }}
+
+#  - name: fetch files to localhost for debug
+#    fetch:
+#      src: '{{ manifest_path }}/{{ item.file }}'
+#      dest: 'files/{{ item.file }}'
+#      flat: yes
+#    with_items:
+#      - { file: cluster-monitoring-config.yaml }
+#      - { file: kube-etcd-client-certs.yaml }

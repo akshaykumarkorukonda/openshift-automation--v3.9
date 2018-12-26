@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-monitoring-config
+  namespace: openshift-monitoring
+data:
+  config.yaml: |+
+    prometheusOperator:
+      baseImage: {{ baseImage_prometheusOperator }}
+      prometheusConfigReloaderBaseImage: quay.io/coreos/prometheus-config-reloader
+      configReloaderBaseImage: quay.io/coreos/configmap-reload
+    prometheusK8s:
+      baseImage: {{ baseImage_prometheusK8s }}
+    alertmanagerMain:
+      baseImage: {{ baseImage_alertmanagerMain }}
+    nodeExporter:
+      baseImage: {{ baseImage_nodeExporter }}
+    kubeRbacProxy:
+      baseImage: {{ baseImage_kubeRbacProxy }}
+    kubeStateMetrics:
+      baseImage: {{ baseImage_kubeStateMetrics }}
+    grafana:
+      baseImage: {{ baseImage_grafana }}
+    auth:
+      baseImage: {{ baseImage_auth }}
+    etcd:
+      enabled: true
+      targets:
+        ips:
+{% set list1 = master_ips.stdout.split(' ') %}
+{% for ip in list1 %}
+        - "{{ ip }}"
+{% endfor %}

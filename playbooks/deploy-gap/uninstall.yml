@@ -1,0 +1,29 @@
+
+- name: Evaluate groups and prepare post-config payload
+  hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+  - name: Load variables
+    include_vars:
+      dir: vars/
+
+  - name: Evaluate first_master
+    add_host:
+      name: '{{ master_hosts[0] }}'
+      groups: first_master
+
+- name: Deploy post-config manifests
+  hosts: first_master
+  become: yes
+  gather_facts: no
+  tasks:
+  - name: Load variables
+    include_vars:
+      dir: vars/
+  
+  - name: uninstall gap from cluster
+    script: uninstall-gap.sh
+    register: uninstall
+
+  - debug: var=uninstall.stdout_lines

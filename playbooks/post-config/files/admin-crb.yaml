@@ -1,0 +1,11 @@
+apiVersion: authorization.openshift.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-admin-0
+roleRef:
+  name: cluster-admin
+subjects:
+- kind: User
+  name: admin
+userNames:
+- admin
